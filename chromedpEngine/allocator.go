@@ -21,19 +21,15 @@ var DefaultOptions = []chromedp.ExecAllocatorOption{
 	chromedp.Flag("mute-audio", true),
 	chromedp.Flag("disable-infobars", true),
 	chromedp.Flag("enable-automation", false),
-	chromedp.Flag("ignore-certificate-errors", true),
 	chromedp.Flag("start-maximized", true),
 
-	//chromedp.Flag("blink-settings", "imagesEnabled=false"),
 	chromedp.Flag("disable-default-apps", false),
 	chromedp.Flag("no-sandbox", false),
 	// 隐身模式启动
 	//chromedp.Flag("incognito", true),
 	chromedp.Flag("disable-extensions", false),
 	chromedp.Flag("disable-plugins", false),
-	//chromedp.Flag("disable-software-rasterizer", true),
 	chromedp.NoDefaultBrowserCheck,
-	chromedp.DisableGPU,
 	chromedp.NoFirstRun,
 }
 
@@ -118,8 +114,13 @@ func AddDefaultOptions(option ...chromedp.ExecAllocatorOption) {
 	DefaultOptions = append(DefaultOptions, option...)
 }
 
-func RequestByCookie(ctx context.Context, req *http.Request) (*http.Response, error) {
+func RequestByCookie(ctx context.Context, req *http.Request, isDisableRedirects bool) (*http.Response, error) {
 	httpClient := &http.Client{}
+	if isDisableRedirects {
+		httpClient.CheckRedirect = func(req *http.Request, via []*http.Request) error {
+			return http.ErrUseLastResponse
+		}
+	}
 	cookies, err := network.GetCookies().WithUrls([]string{req.URL.String()}).Do(ctx)
 	if err != nil {
 		return nil, err
